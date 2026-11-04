@@ -1,0 +1,73 @@
+# teardownpro/action. Written from Teardown's source repository by its export script. Actions are
+# pinned by commit SHA to releases at least two weeks old, and the CLI to the exact version this
+# repository releases with it.
+name: Teardown check
+description: Check the dependencies against teardown.yml, write signed evidence and break the build on the policy.
+branding:
+  icon: layers
+  color: gray-dark
+inputs:
+  token:
+    description: A Teardown token (tdn_…), from a secret.
+    required: true
+  policy:
+    description: The policy file. Default teardown.yml, else the exploit-first preset.
+    required: false
+    default: ''
+  preset:
+    description: exploit-first or regulated, when there's no policy file.
+    required: false
+    default: ''
+  fail-mode:
+    description: policy (the policy's onError), fail-open or fail-closed, when Teardown can't be reached.
+    required: false
+    default: policy
+  sbom:
+    description: auto runs cdxgen (pinned) only for a Gradle or Maven build with no gradle.lockfile or SBOM; off never runs it.
+    required: false
+    default: auto
+  evidence-retention-days:
+    description: How long GitHub keeps the evidence artifact (an audit year plus a margin).
+    required: false
+    default: '400'
+outputs:
+  result:
+    description: pass, fail or not-run.
+    value: ${{ steps.check.outputs.result }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      with:
+        node-version: 24
+    - id: check
+      shell: bash
+      env:
+        TEARDOWN_TOKEN: ${{ inputs.token }}
+        INPUT_POLICY: ${{ inputs.policy }}
+        INPUT_PRESET: ${{ inputs.preset }}
+        INPUT_FAIL_MODE: ${{ inputs.fail-mode }}
+        INPUT_SBOM: ${{ inputs.sbom }}
+      run: |
+        args=(check --sbom "$INPUT_SBOM")
+        [ -n "$INPUT_POLICY" ] && args+=(--policy "$INPUT_POLICY")
+        [ -n "$INPUT_PRESET" ] && args+=(--preset "$INPUT_PRESET")
+        case "$INPUT_FAIL_MODE" in fail-open) args+=(--fail-open);; fail-closed) args+=(--fail-closed);; esac
+        set +e
+        # The CLI released from this repository, at its exact version.
+        npx --yes @teardownpro/cli@0.1.0 "${args[@]}"
+        code=$?
+        set -e
+        result=$(node -e 'try{console.log(require("./teardown-evidence.json").result)}catch{console.log("not-run")}')
+        echo "result=$result" >> "$GITHUB_OUTPUT"
+        exit $code
+    - if: always()
+      uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+      with:
+        name: teardown-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+        # The evidence, and the SBOM cdxgen made for a Gradle or Maven build (teardown verify needs it).
+        path: |
+          teardown-evidence.json
+          teardown-bom.cdx.json
+        retention-days: ${{ inputs.evidence-retention-days }}
+        if-no-files-found: warn

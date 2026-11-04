@@ -1,0 +1,40 @@
+# .github/workflows/release.yml in the public teardownpro/action repository (scripts/export-cli.ts
+# puts it there). Publishes @teardownpro/cli with npm trusted publishing: GitHub's OIDC token, no npm
+# token anywhere, and provenance, which npm generates only from a public repository. The trusted
+# publisher on npmjs.com names this repository and this file (release.yml).
+name: Release CLI
+
+on:
+  push:
+    tags: ['cli-v*']
+
+permissions: {}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      # npm trusted publishing (OIDC): the only credential, minted for this job.
+      id-token: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      # Trusted publishing needs npm 11.5.1 or later; 11.21.0 was published on 30 Sep 2026.
+      - run: npm install -g npm@11.21.0
+      - working-directory: cli
+        run: npm ci --ignore-scripts
+      - working-directory: cli
+        name: The tag names the package's version
+        run: test "cli-v$(node -p 'require("./package.json").version')" = "$GITHUB_REF_NAME"
+      - working-directory: cli
+        run: npm run build
+      - working-directory: cli
+        run: node dist/teardown.mjs --version
+      - working-directory: cli
+        run: npm publish --access public
