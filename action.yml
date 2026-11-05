@@ -55,7 +55,7 @@ runs:
         case "$INPUT_FAIL_MODE" in fail-open) args+=(--fail-open);; fail-closed) args+=(--fail-closed);; esac
         set +e
         # The CLI released from this repository, at its exact version.
-        npx --yes @teardownpro/cli@0.1.0 "${args[@]}"
+        npx --yes @teardownpro/cli@0.1.1 "${args[@]}"
         code=$?
         set -e
         result=$(node -e 'try{console.log(require("./teardown-evidence.json").result)}catch{console.log("not-run")}')

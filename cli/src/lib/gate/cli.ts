@@ -12,7 +12,7 @@ import { canonical, digest, EXPLOIT_FIRST, PolicyError, policyFromYaml, PRESETS,
  */
 
 /** packages/cli/package.json's version (a test checks they match). */
-export const CLI_VERSION = '0.1.0';
+export const CLI_VERSION = '0.1.1';
 export const DEFAULT_API = 'https://teardown.pro';
 /**
  * The cdxgen run for Gradle and Maven builds, pinned exactly (12.8.4, published 18 Aug 2026), the

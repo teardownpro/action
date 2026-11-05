@@ -25,7 +25,8 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
-      # Trusted publishing needs npm 11.5.1 or later; 11.21.0 was published on 30 Sep 2026.
+      # Trusted publishing needs npm 11.5.1 or later and npm stage publish 11.15.0 or later; 11.21.0
+      # was published on 30 Sep 2026.
       - run: npm install -g npm@11.21.0
       - working-directory: cli
         run: npm ci --ignore-scripts
@@ -37,4 +38,7 @@ jobs:
       - working-directory: cli
         run: node dist/teardown.mjs --version
       - working-directory: cli
-        run: npm publish --access public
+        # Staged publishing: the version waits on npmjs.com until a maintainer approves it with 2FA
+        # (npm stage approve, or the Staged Packages tab). The trusted publisher allows only this
+        # command, and npm still generates provenance from the OIDC token for a public repository.
+        run: npm stage publish --access public

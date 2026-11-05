@@ -127,7 +127,7 @@ of the commit the evidence names, with the evidence file downloaded from the run
 
 ```sh
 git checkout <commit from fromJob.runner.commit>
-npx @teardownpro/cli@0.1.0 verify teardown-evidence.json
+npx @teardownpro/cli@0.1.1 verify teardown-evidence.json
 ```
 
 It needs no token. It prints each check, exits 0 when everything matches and exits 1 naming
@@ -157,8 +157,10 @@ repository has a Gradle or Maven build and none of those files, the action runs
 
 This repository is public so npm can record provenance: each `@teardownpro/cli` version links to
 the commit and workflow run that built it. `.github/workflows/release.yml` publishes on a `cli-v*`
-tag with npm trusted publishing (GitHub’s OIDC token; there’s no npm token). The tree is written
-from Teardown’s source repository by `scripts/export-cli.ts`.
+tag with npm trusted publishing (GitHub’s OIDC token; there’s no npm token). Releases are staged:
+the workflow runs `npm stage publish`, and a version goes live only once a maintainer approves it
+on npm with two-factor authentication. The tree is written from Teardown’s source repository by
+`scripts/export-cli.ts`.
 
 ## License
 

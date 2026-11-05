@@ -1,6 +1,6 @@
 {
   "name": "@teardownpro/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "teardown check: a CI gate on your dependencies, decided by Teardown’s published rules.",
   "license": "MIT",
   "type": "module",
